@@ -11,18 +11,85 @@ const users = [];
 
 function checksExistsUserAccount(request, response, next) {
   // Complete aqui
+  const { username } = request.headers;
+
+  const user = users.find(user => user.username === username)
+
+  if (!user) {
+    return response.status(404).json({
+      error: "User not found"
+    })
+  }
+
+  request.user = user
+
+  return next();
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
   // Complete aqui
+  const { user } = request;
+
+  const todoUserQuota = user.todos.length;
+
+  if(!user.pro) {
+    if(todoUserQuota >= 10) {
+      return response.status(403).json({
+        error: "you exceeded your quota"
+      })
+    } 
+  }
+
+  return next();
 }
 
 function checksTodoExists(request, response, next) {
   // Complete aqui
+  const { username } = request.headers;
+  const { id } = request.params;
+
+  const user = users.find(user => user.username === username)
+
+  if (!user) {
+    return response.status(404).json({ error: 'User not found'})
+  }
+  
+  const todosUser = user.todos;
+  const todo = todosUser.find(todo => todo.id === id)
+
+  const regexExp = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
+
+  
+
+  if (!regexExp.test(id)){
+    return response.status(400).json({ error: 'invalid id'})
+  }
+
+  if (!todo) {
+    return response.status(404).json({ error: 'Todo do not exists' });
+  }
+
+  request.user = user;
+  request.todo = todo;
+
+  return next();
+
 }
 
 function findUserById(request, response, next) {
   // Complete aqui
+  const { id } = request.params;
+
+  const user = users.find((user) => user.id === id)
+
+  if (!user) {
+    return response.status(404).json({
+      error: "User dont exist"
+    })
+  }
+  request.user = user;
+
+  return next();
 }
 
 app.post('/users', (request, response) => {
